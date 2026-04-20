@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Match Scorer</title>
+  <style>
+    /* ---- Base ---- */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f4f6f9; color: #222; }
+    header { background: #1a73e8; color: #fff; padding: 1.2rem 2rem; }
+    header h1 { font-size: 1.4rem; }
+    main { max-width: 920px; margin: 2rem auto; padding: 0 1rem; }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.12);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    h2 {
+      font-size: .95rem;
+      margin-bottom: 1rem;
+      color: #444;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    label { display: block; font-size: .9rem; margin-bottom: .4rem; color: #555; }
+    input[type=file], textarea {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: .6rem .8rem;
+      font-size: .95rem;
+    }
+    textarea { resize: vertical; min-height: 160px; }
+
+    button {
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: .65rem 1.4rem;
+      font-size: .95rem;
+      cursor: pointer;
+      margin-top: .8rem;
+    }
+    button:disabled { opacity: .5; cursor: default; }
+    button.secondary {
+      background: #fff;
+      color: #1a73e8;
+      border: 1px solid #1a73e8;
+      margin-left: .5rem;
+    }
+    #status-msg { font-size: .85rem; color: #888; margin-top: .5rem; }
+
+    /* ---- Overall score circle ---- */
+    .score-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: #1a73e8;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: bold;
+      margin: 0 auto 1rem;
+      transition: background .4s;
+    }
+    .score-circle span.label {
+      font-size: .6rem;
+      font-weight: normal;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      opacity: .85;
+    }
+
+    /* ---- Category breakdown grid ---- */
+    .breakdown-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .cat-card {
+      border: 1px solid #e8eaed;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .cat-title { font-size: .75rem; text-transform: uppercase; color: #888; margin-bottom: .4rem; }
+    .cat-score { font-size: 1.5rem; font-weight: bold; }
+    .cat-weight { font-size: .75rem; color: #aaa; }
+    .cat-detail { font-size: .78rem; color: #555; margin-top: .5rem; line-height: 1.4; }
+
+    /* Progress bar inside category card */
+    .bar-track {
+      height: 6px;
+      background: #eee;
+      border-radius: 3px;
+      margin: .5rem 0 .3rem;
+      overflow: hidden;
+    }
+    .bar-fill { height: 100%; border-radius: 3px; transition: width .6s; }
+
+    /* ---- Skill chips ---- */
+    .skill-list { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem; }
+    .chip { padding: .25rem .65rem; border-radius: 12px; font-size: .8rem; font-weight: 500; }
+    .chip.matched  { background: #d4edda; color: #155724; }
+    .chip.missing  { background: #f8d7da; color: #721c24; }
+    .chip.neutral  { background: #e8f0fe; color: #1a56a4; }
+    .chip.cert     { background: #fff3cd; color: #856404; }
+    .chip.extra    { background: #e2d9f3; color: #5a3e8a; }
+
+    /* ---- Divider between chip sections ---- */
+    .chip-section { margin-top: 1.2rem; }
+    .chip-section strong { font-size: .9rem; }
+
+    #score-section { display: none; }
+    #resume-summary { display: none; }
+  </style>
+</head>
+<body>
+
+<header><h1>Resume Match Scorer</h1></header>
+<main>
+
+  <!-- Step 1: Upload -->
+  <div class="card" id="upload-card">
+    <h2>Step 1 — Upload Your Resume (PDF)</h2>
+    <label for="resume-file">Select PDF</label>
+    <input type="file" id="resume-file" accept=".pdf" />
+    <button id="upload-btn">Upload &amp; Parse</button>
+    <p id="status-msg"></p>
+  </div>
+
+  <!-- Resume summary shown after parsing, before scoring -->
+  <div class="card" id="resume-summary">
+    <h2>Detected Resume Profile</h2>
+    <div id="summary-body" style="font-size:.9rem;line-height:1.8;color:#444"></div>
+  </div>
+
+  <!-- Step 2: Job Description -->
+  <div class="card" id="jd-card" style="display:none">
+    <h2>Step 2 — Paste Job Description</h2>
+    <textarea id="job-desc" placeholder="Paste the full job description here…"></textarea>
+    <button id="score-btn">Get Match Score</button>
+    <button class="secondary" id="reset-btn">Upload Different Resume</button>
+  </div>
+
+  <!-- Results -->
+  <div class="card" id="score-section">
+    <h2>Match Results</h2>
+
+    <!-- Overall score circle -->
+    <div class="score-circle" id="score-display">
+      —<span class="label">overall</span>
+    </div>
+
+    <!-- Per-category breakdown cards -->
+    <div class="breakdown-grid" id="breakdown-grid"></div>
+
+    <!-- Skill chips -->
+    <div class="chip-section">
+      <strong>Matched Skills</strong>
+      <div class="skill-list" id="matched-skills"></div>
+    </div>
+    <div class="chip-section">
+      <strong>Missing Skills</strong>
+      <div class="skill-list" id="missing-skills"></div>
+    </div>
+    <div class="chip-section">
+      <strong>Certifications Detected</strong>
+      <div class="skill-list" id="cert-chips"></div>
+    </div>
+    <div class="chip-section">
+      <strong>Extra-Curricular Indicators</strong>
+      <div class="skill-list" id="extra-chips"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+let resumeId   = null;
+let resumeData = null; // cached /status response
+
+// -------------------------------------------------------------------------
+// Step 1 — Upload & Parse
+// -------------------------------------------------------------------------
+document.getElementById('upload-btn').addEventListener('click', async () => {
+  const file = document.getElementById('resume-file').files[0];
+  if (!file) { alert('Please select a PDF.'); return; }
+
+  const msg = document.getElementById('status-msg');
+  const btn = document.getElementById('upload-btn');
+  btn.disabled = true;
+  msg.textContent = 'Uploading…';
+
+  const fd = new FormData();
+  fd.append('resume', file);
+  const res  = await fetch('/upload', { method: 'POST', body: fd });
+  const data = await res.json();
+
+  if (data.error) { msg.textContent = data.error; btn.disabled = false; return; }
+
+  resumeId = data.resume_id;
+  msg.textContent = 'Parsing resume… this may take ~30 seconds.';
+
+  // Hide stale results on re-upload
+  document.getElementById('score-section').style.display   = 'none';
+  document.getElementById('resume-summary').style.display  = 'none';
+  document.getElementById('jd-card').style.display         = 'none';
+
+  pollStatus();
+});
+
+// -------------------------------------------------------------------------
+// Poll /status until Cloud Function finishes
+// -------------------------------------------------------------------------
+async function pollStatus() {
+  const msg = document.getElementById('status-msg');
+  const res  = await fetch(`/status/${resumeId}`);
+  const data = await res.json();
+
+  if (data.status === 'processing') {
+    setTimeout(pollStatus, 4000);
+    return;
+  }
+
+  // Cache the parsed resume profile
+  resumeData = data;
+
+  // Show a quick summary so the user can verify what was extracted
+  renderResumeSummary(data);
+
+  msg.textContent = `Parsed! Found ${data.skills.length} skills — now paste a job description.`;
+  document.getElementById('jd-card').style.display = 'block';
+  document.getElementById('upload-btn').disabled   = false;
+}
+
+// -------------------------------------------------------------------------
+// Render a human-readable summary of the extracted resume data
+// -------------------------------------------------------------------------
+function renderResumeSummary(data) {
+  const lines = [];
+
+  lines.push(`<strong>Degree:</strong> ${data.degree_level || 'not detected'}` +
+    (data.degree_fields?.length ? ` in ${data.degree_fields.join(', ')}` : '') +
+    (data.gpa ? ` &nbsp;|&nbsp; GPA ${data.gpa}` : ''));
+
+  lines.push(`<strong>Estimated Experience:</strong> ${data.experience_years ?? 0} years`);
+
+  lines.push(`<strong>Technical Skills (${data.skills?.length ?? 0}):</strong> ` +
+    (data.skills?.length ? data.skills.join(', ') : 'none detected'));
+
+  lines.push(`<strong>Certifications:</strong> ` +
+    (data.certifications?.length ? data.certifications.join(', ') : 'none detected'));
+
+  lines.push(`<strong>Extra-Curriculars / Leadership:</strong> ` +
+    (data.extracurriculars?.length ? data.extracurriculars.join(', ') : 'none detected'));
+
+  document.getElementById('summary-body').innerHTML = lines.join('<br/>');
+  document.getElementById('resume-summary').style.display = 'block';
+}
+
+// -------------------------------------------------------------------------
+// Step 2 — Score
+// -------------------------------------------------------------------------
+document.getElementById('score-btn').addEventListener('click', async () => {
+  const jd = document.getElementById('job-desc').value.trim();
+  if (!jd) { alert('Please paste a job description.'); return; }
+
+  const res  = await fetch('/score', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ resume_id: resumeId, job_description: jd }),
+  });
+  const data = await res.json();
+  if (data.error) { alert(data.error); return; }
+
+  // Overall score circle — color coded
+  const circle = document.getElementById('score-display');
+  circle.innerHTML = `${data.score}%<span class="label">overall</span>`;
+  circle.style.background =
+    data.score >= 70 ? '#28a745' :
+    data.score >= 45 ? '#fd7e14' : '#dc3545';
+
+  // Per-category breakdown cards
+  renderBreakdown(data.breakdown);
+
+  // Skill chips
+  renderChips('matched-skills', data.matched_skills, 'matched');
+  renderChips('missing-skills', data.missing_skills, 'missing');
+  renderChips('cert-chips',     data.certifications || [], 'cert');
+  renderChips('extra-chips',    data.extracurriculars || [], 'extra');
+
+  const section = document.getElementById('score-section');
+  section.style.display = 'block';
+  section.scrollIntoView({ behavior: 'smooth' });
+});
+
+// -------------------------------------------------------------------------
+// Render the four category breakdown cards
+// -------------------------------------------------------------------------
+function renderBreakdown(breakdown) {
+  const ICONS = { skills: '🛠', education: '🎓', experience: '📅', extras: '🏆' };
+  const LABELS = { skills: 'Technical Skills', education: 'Education', experience: 'Experience', extras: 'Certs & Extras' };
+
+  const grid = document.getElementById('breakdown-grid');
+  grid.innerHTML = '';
+
+  for (const [key, val] of Object.entries(breakdown)) {
+    const color = val.score >= 70 ? '#28a745' : val.score >= 40 ? '#fd7e14' : '#dc3545';
+    grid.innerHTML += `
+      <div class="cat-card">
+        <div class="cat-title">${ICONS[key] || ''} ${LABELS[key] || key}</div>
+        <div class="cat-score" style="color:${color}">${val.score}%</div>
+        <div class="cat-weight">weight: ${val.weight}%</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${val.score}%;background:${color}"></div>
+        </div>
+        <div class="cat-detail">${val.detail}</div>
+      </div>`;
+  }
+}
+
+// -------------------------------------------------------------------------
+// Reset — upload a different resume without a full page refresh
+// -------------------------------------------------------------------------
+document.getElementById('reset-btn').addEventListener('click', () => {
+  resumeId   = null;
+  resumeData = null;
+  document.getElementById('resume-file').value    = '';
+  document.getElementById('job-desc').value       = '';
+  document.getElementById('status-msg').textContent = '';
+  document.getElementById('jd-card').style.display          = 'none';
+  document.getElementById('score-section').style.display    = 'none';
+  document.getElementById('resume-summary').style.display   = 'none';
+  document.getElementById('upload-btn').disabled = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// -------------------------------------------------------------------------
+// Utility: render skill array as colored chip spans
+// -------------------------------------------------------------------------
+function renderChips(containerId, items, cls) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = items.length
+    ? items.map(s => `<span class="chip ${cls}">${s}</span>`).join('')
+    : '<em style="color:#aaa">none</em>';
+}
+</script>
+</body>
+</html>

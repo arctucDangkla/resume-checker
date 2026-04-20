@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gcloud config:*)",
+      "Bash(gcloud projects:*)",
+      "Bash(gcloud services:*)",
+      "Bash(python3 -c \"import json,sys; p=json.load\\(sys.stdin\\); [print\\(b['role'], b['members']\\) for b in p['bindings']]\")",
+      "Bash(gcloud app describe:*)",
+      "Bash(gcloud app create:*)",
+      "Bash(gcloud auth:*)",
+      "Bash(curl -s -H \"Authorization: Bearer $\\(gcloud auth print-access-token\\)\" \"https://appengine.googleapis.com/v1/apps/resume-checker-1775416523\")",
+      "Bash(gcloud run services describe:*)",
+      "Bash(gcloud run services logs:*)",
+      "Bash(gcloud run:*)"
+    ]
+  }
+}

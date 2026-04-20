@@ -1,0 +1,40 @@
+Network Solutions Engineer
+TechNova Infrastructure Group | Grand Rapids, MI | Full-Time
+
+Position Overview
+We are seeking a skilled Network Solutions Engineer to join our IT Infrastructure team.
+This role is responsible for designing, implementing, maintaining, and troubleshooting
+complex network infrastructure solutions.
+
+Key Responsibilities
+- Design scalable LAN/WAN architectures and implement new infrastructure projects
+- Configure and deploy routers, switches, firewalls, and load balancers
+- Monitor network performance using SNMP, NetFlow, and SolarWinds
+- Maintain BGP, OSPF, and MPLS routing configurations
+- Implement SD-WAN and VPN solutions
+- Automate network tasks using Python, Ansible, and Terraform
+- Manage firewall policies (Fortinet, Palo Alto, Cisco ASA)
+- Troubleshoot issues with Wireshark and packet analysis tools
+- Collaborate with security team on IDS/IPS deployments and TLS/SSL configurations
+- Document network topology and maintain configuration standards
+
+Required Qualifications
+- Education: Bachelor's degree in Computer Science, Information Technology, or related field
+- Experience: 3+ years of experience in network engineering or infrastructure roles
+- Advanced knowledge of TCP/IP, BGP, OSPF, MPLS, VPN, VLAN
+- Hands-on experience with Cisco and Juniper hardware
+- Proficiency with firewall management and security protocols
+- Experience with network monitoring tools (Wireshark, NetFlow, SNMP)
+- Knowledge of SD-WAN and WAN technologies
+- Familiarity with Linux, Bash scripting, and Python automation
+
+Certifications (one or more preferred)
+- Cisco Certified Network Associate (CCNA) or higher
+- CompTIA Network+
+- CISSP or equivalent security certification
+
+Preferred Qualifications
+- Experience with cloud networking on AWS or Azure
+- Knowledge of Ansible, Terraform for infrastructure automation
+- Experience with IPv6 deployment
+- Background in network security and threat mitigation
